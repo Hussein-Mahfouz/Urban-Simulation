@@ -144,10 +144,212 @@ cdatasub$A_i <- A_i$A_i[match(cdatasub$OrigCodeNew,A_i$OrigCodeNew)]
 
 #To check everything works, recreate the original estimates
 cdatasub$prodsimest4_scenario <- cdatasub$A_i*cdatasub$O_i*wj3_alpha*dist_beta
-
+#round values
 cdatasub$prodsimest4_scenario <- round(cdatasub$prodsimest4_scenario,0)
 #now we can create pivot table to turn paired list into matrix (and compute the margins as well)
 cdatasubmat5 <- dcast(cdatasub, Orig ~ Dest, sum, value.var = "prodsimest4_scenario", margins=c("Orig", "Dest"))
 cdatasubmat5
+
+
+# ATTRACTION CONSTRAINED MODEL
+attrSim <- glm(Total ~ DestCodeNew+log(vi1_origpop)+log(dist)-1, na.action = na.exclude, family = poisson(link = "log"), data = cdatasub)
+summary(attrSim)
+
+# Examine how the constraints hold for destinations this time:
+  
+#first round the estimates
+cdatasub$attrsimFitted <- round(fitted(attrSim),0)
+#now we can create pivot table to turn paired list into matrix (and compute the margins as well)
+cdatasubmat6 <- dcast(cdatasub, Orig ~ Dest, sum, value.var = "attrsimFitted", margins=c("Orig", "Dest"))
+cdatasubmat6
+
+#use the functions from the last practical to calculate some goodness-of-fit statistics
+CalcRSquared(cdatasub$Total,cdatasub$attrsimFitted)
+CalcRMSE(cdatasub$Total,cdatasub$attrsimFitted)
+
+# DOUBLY CONSTRAINED MODEL
+
+# calculation of Ai relies on knowing Bj and the calculation of Bj relies on knowing Ai. A conundrum!! 
+# If I don’t know Ai how can I calcuate Bj and then in turn Ai and then Bj ad infinitum???!!
+
+# there is an algorithm for iteratively rriving at values for Ai and Bj
+
+# OR through R
+
+#run a doubly constrained SIM
+doubSim <- glm(Total ~ Orig+Dest+log(dist)-1, na.action = na.exclude, family = poisson(link = "log"), data = cdatasub)
+#let's have a look at it's summary...
+summary(doubSim)
+
+# various flows and goodness-of-fit statistics?
+
+#then round the estimates
+cdatasub$doubsimFitted <- round(fitted(doubSim),0)
+#now we can create pivot table to turn paired list into matrix (and compute the margins as well)
+cdatasubmat7 <- dcast(cdatasub, Orig ~ Dest, sum, value.var = "doubsimFitted", margins=c("Orig", "Dest"))
+cdatasubmat7
+
+# use the functions from the last practical to calculate some goodness-of-fit statistics
+CalcRSquared(cdatasub$Total,cdatasub$doubsimFitted)
+CalcRMSE(cdatasub$Total,cdatasub$doubsimFitted)
+
+# the model is now producing some good estimates. However, there are still some errors in the 
+# flows, particularly for estimates between Barking and Dagenham and Bexley or Barnet and Camden.
+
+# TWEAKING THE MODEL
+
+# we have assumed that distance decay parameter follows a negative power law, BUT IT DOESN'T HAVE TO
+
+xdistance <- seq(1,20,by=1)
+# negative power
+InvPower2 <- xdistance^-2
+# negative exponential
+NegExp0.3 <- exp(-0.3*xdistance)
+
+df <- cbind(InvPower2,NegExp0.3)
+meltdf <- melt(df)
+ggplot(meltdf,aes(Var1,value, colour = Var2)) + geom_line()
+
+# if observed flows drop very quickly with distance then the inverse power law is more appropriate
+# if the effect of distance are less severe then the negative exponential function might be more appropriate
+
+# test the negative exponential by substituting  −βlndij for −βdij in our model:
+
+#run a production constrained SIM
+doubSim1 <- glm(Total ~ Orig+Dest+dist-1, na.action = na.exclude, family = poisson(link = "log"), data = cdatasub)
+#let's have a look at it's summary...
+summary(doubSim1)
+
+cdatasub$doubsimFitted1 <- round(fitted(doubSim1),0)
+
+CalcRSquared(cdatasub$Total,cdatasub$doubsimFitted1)
+CalcRMSE(cdatasub$Total,cdatasub$doubsimFitted1)
+
+# negative exponential improves the fit!
+
+# Add predictor variables and see whether they have an effect
+
+# For example, instead of modelling total flows, we could try and model motorbike 
+# commuters using information on car and underground commuters
+kitchensinkSIM <- glm(Motobike ~ Orig+Dest+dist+CarDrive+Underground-1, na.action = na.exclude, family = poisson(link = "log"), data = cdatasub)
+#let's have a look at it's summary...
+summary(kitchensinkSIM)
+# Some of the dummy / constraint origins become statistically 
+# insignificant when car and tube commuters are added into the mix.
+
+
+
+# Senior Algorithm to calculate Ai and Bj iteratively 
+
+
+##########################################################################
+#This block of code will calculate balancing factors for an entropy
+#maximising model (doubly constrained)
+
+#set beta to the appropriate value according to whether exponential or power
+if(tail(names(coef(doubSim)),1)=="dist"){
+  cdatasub$beta <- coef(doubSim)["dist"]
+  disdecay = 0
+} else {
+  cdatasub$beta <- coef(doubSim)["log(dist)"]
+  disdecay = 1
+}
+
+#Create some new Ai and Bj columns and fill them with starting values
+cdatasub$Ai <- 1
+cdatasub$Bj <- 1
+cdatasub$OldAi <- 10
+cdatasub$OldBj <- 10
+cdatasub$diff <- abs((cdatasub$OldAi-cdatasub$Ai)/cdatasub$OldAi)
+
+#create convergence and iteration variables and give them initial values
+cnvg = 1
+its = 0
+
+#This is a while-loop which will calculate Orig and Dest balancing
+#factors until the specified convergence criteria is met
+while(cnvg > 0.001){
+  print(paste0("iteration ", its))
+  its = its + 1 #increment the iteration counter by 1
+  #First some initial calculations for Ai...
+  if(disdecay==0){
+    cdatasub$Ai <- (cdatasub$Bj*cdatasub$D_j*exp(cdatasub$dist*cdatasub$beta))
+  } else {
+    cdatasub$Ai <- (cdatasub$Bj*cdatasub$D_j*exp(log(cdatasub$dist)*cdatasub$beta))
+  }  
+  #aggregate the results by your Origs and store in a new dataframe
+  AiBF <- aggregate(Ai ~ Orig, data = cdatasub, sum)
+  #now divide by 1
+  AiBF$Ai <- 1/AiBF$Ai 
+  #and replace the initial values with the new balancing factors
+  updates = AiBF[match(cdatasub$Orig,AiBF$Orig),"Ai"]
+  cdatasub$Ai = ifelse(!is.na(updates), updates, cdatasub$Ai)
+  #now, if not the first iteration, calculate the difference between  the new Ai values and the old Ai values and once done, overwrite the old Ai values with the new ones. 
+  if(its==1){
+    cdatasub$OldAi <- cdatasub$Ai    
+  } else {
+    cdatasub$diff <- abs((cdatasub$OldAi-cdatasub$Ai)/cdatasub$OldAi)    
+    cdatasub$OldAi <- cdatasub$Ai
+  }
+  
+  #Now some similar calculations for Bj...
+  if(disdecay==0){
+    cdatasub$Bj <- (cdatasub$Ai*cdatasub$O_i*exp(cdatasub$dist*cdatasub$beta))
+  } else {
+    cdatasub$Bj <- (cdatasub$Ai*cdatasub$O_i*exp(log(cdatasub$dist)*cdatasub$beta))
+  }
+  #aggregate the results by your Dests and store in a new dataframe
+  BjBF <- aggregate(Bj ~ Dest, data = cdatasub, sum)
+  #now divide by 1
+  BjBF$Bj <- 1/BjBF$Bj  
+  #and replace the initial values by the balancing factor
+  updates = BjBF[match(cdatasub$Dest,BjBF$Dest),"Bj"]
+  cdatasub$Bj = ifelse(!is.na(updates), updates, cdatasub$Bj)
+  #now, if not the first iteration, calculate the difference between the new Bj values and the old Bj values and once done, overwrite the old Bj values with the new ones.
+  if(its==1){
+    cdatasub$OldBj <- cdatasub$Bj
+  } else {
+    cdatasub$diff <- abs((cdatasub$OldBj-cdatasub$Bj)/cdatasub$OldBj)    
+    cdatasub$OldBj <- cdatasub$Bj
+  } 
+  #overwrite the convergence variable with 
+  cnvg = sum(cdatasub$diff)
+}
+## [1] "iteration 0"
+## [1] "iteration 1"
+## [1] "iteration 2"
+## [1] "iteration 3"
+## [1] "iteration 4"
+## [1] "iteration 5"
+## [1] "iteration 6"
+## [1] "iteration 7"
+## [1] "iteration 8"
+# So, we’ve calculated our Ai and Bj values using out iterative routine - now we can plug them back into our model, to prove, once again, that the Poisson Model is exactly the same as the multiplicative Entropy Maximising Model…
+
+
+# plug them back into our model, to prove, once again, that the Poisson Model is exactly the 
+# same as the multiplicative Entropy Maximising Model
+########################################################################
+#Now create some SIM estimates
+if(disdecay==0){
+  cdatasub$SIM_Estimates <- (cdatasub$O_i*cdatasub$Ai*cdatasub$D_j*cdatasub$Bj*exp(cdatasub$dist*cdatasub$beta))
+} else{
+  cdatasub$SIM_Estimates_pow <- (cdatasub$O_i*cdatasub$Ai*cdatasub$D_j*cdatasub$Bj*exp(log(cdatasub$dist)*cdatasub$beta))
+}
+########################################################################
+
+cdatasub$SIM_Estimates <- round(cdatasub$SIM_Estimates,0)
+cdatasubmat8 <- dcast(cdatasub, Orig ~ Dest, sum, value.var = "SIM_Estimates", margins=c("Orig", "Dest"))
+cdatasubmat8
+
+
+
+
+
+
+
+
+
+
 
 

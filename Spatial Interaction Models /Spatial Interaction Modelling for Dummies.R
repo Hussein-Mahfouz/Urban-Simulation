@@ -95,9 +95,8 @@ cdatasub <- cdatasub[cdatasub$OrigCode!=cdatasub$DestCode,]
 cdatasub <- cdatasub[1:42,]
 #now re-order so that OrigCodeNew, DestCodeNew and TotalNoIntra are the first three columns *note that you have to be explicit about the select function in the dplyr package as MASS also has a 'select' function and R will try and use this by default. We can be explict by using the syntax package::function
 cdatasub <- dplyr::select(cdatasub, OrigCodeNew, DestCodeNew, Total, everything())
-# re-order so that 'lad15cd' is the first column in LondonBNG
-cdatasub <- dplyr::select(cdatasub, OrigCodeNew, DestCodeNew, Total, everything())
 
+# re-order so that 'lad15cd' is the first column in LondonBNG
 # HUSSEIN 
 library(sf)
 LondonBNG_sf <- st_as_sf(LondonBNG)
@@ -158,7 +157,7 @@ vi1_mu <- cdatasub$vi1_origpop^mu
 wj2_alpha <- cdatasub$wj2_destsal^alpha
 dist_beta <- cdatasub$dist^beta
 T1 <- vi1_mu*wj2_alpha*dist_beta
-k <- T2/sum(T1)
+k <- T2/sum(T1)       #balancing parameter, ensures total flow matches reality
 
 #run the model and store all of the new flow estimates in a new column in the dataframe
 cdatasub$unconstrainedEst1 <- round(k*vi1_mu*wj2_alpha*dist_beta,0)
