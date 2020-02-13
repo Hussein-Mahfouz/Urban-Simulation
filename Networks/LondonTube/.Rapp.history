@@ -1,0 +1,154 @@
+library(igraph)#
+#
+#first let us get the network in the given form#
+file_name <- "london_network.csv"#
+#
+#read and get network#
+dat=read.csv(file_name,header=TRUE)#,row.names=1,check.names=FALSE) #
+data=data.frame(dat,weight=dat$distance)#
+g_london=graph.data.frame(data,directed=FALSE)
+n_stations=length(V(g_london))#
+n_stations#
+# No of edges#
+m= length(E(g_london))#
+m
+clusters(g_london)$no
+d_max <- diameter(g_london) #this gives me the max n. if nt weighted#
+d_max#
+d_max_unw <- diameter(g_london,weights=NA)#
+d_max_unw
+bet_london=betweenness(g_london, v=V(g_london), directed = F, normalized = FALSE)#
+# or just betweenness(g_london)
+plot(g_london)
+g_london
+file_stations <- "london_stations.csv"
+info_names=dat=read.csv(file_stations,header=TRUE)#
+  #first match names of nodes to id field#
+	vect_p=match(V(g_london)$name,info_names$id)#
+	#get real names for stands#
+	v_names=info_names$station_name[vect_p]
+V(g_london)
+V(g_london)$name
+g_london <- set.vertex.attribute(g_london, "name", value=as.character(v_names))
+V(g_london)
+n_stations=length(V(g_london))#
+n_stations#
+# No of edges#
+m= length(E(g_london))#
+m
+clusters(g_london)$no
+bet_london=betweenness(g_london, v=V(g_london), directed = F, normalized = FALSE)
+bet_london
+sort(bet_london)
+deg_g=degree(g_london)
+deg_g
+sort(deg_g)
+plot(g_london)
+plot(g_london,layout=layout.fruchterman.reingold)
+plot(g_london,layout=layout.kamada.kawai)
+plot(g_london,layout=layout.lgl)
+plot(g_london,layout=layout.graphopt)
+alg_name='Girvan-Newman'#
+	GN_comm <- edge.betweenness.community(g_london)#
+	#look at result of algorithm#
+	print(GN_comm)
+#the process aims at maximising the modularity#
+	modularity(GN_comm)#
+	# number of communities and their sizes#
+	nc=length(GN_comm)#
+	sizes(GN_comm)
+V(g_london)#
+	mem_vec=membership(GN_comm)
+plot(GN_comm,g_london,layout=layout.fruchterman.reingold)
+require(rgeos)#
+require(rgdal)#
+require(sp)#
+require(maptools)
+dendPlot(GN_comm,use.modularity = TRUE)#
+	title(paste('Community structure dendrogram for ',alg_name,' method \n',nc,' communities for the karate club',sep=''))
+mem_vec
+table(mem_vec)
+require(rgeos)
+install.packages('rgeos')
+install.packages("rgeos", repos="http://R-Forge.R-project.org", type="source")
+require(rgeos)
+require(rgdal)
+install.packages('gdal')
+install.packages("rgdal", repos="http://R-Forge.R-project.org", type="source")
+library(igraph)#
+require(rgeos)#
+require(rgdal)#
+require(ggplot2)#
+require(sp)
+library(igraph)#
+require(rgeos)#
+require(rgdal)#
+require(ggplot2)#
+require(sp)
+library(igraph)#
+require(rgeos)#
+require(rgdal)#
+require(ggplot2)#
+require(sp)
+install.packages("rgdal")
+require(rgdal)
+file_name <- "london_network.csv"#
+file_stations <- "london_stations.csv"
+dir_tube <- "underground/"#
+shapeFile <- readOGR(dsn = dir_tube, "underground")#
+data.shapeFile=shapeFile@data
+head(shapeFile@lines)
+head(shapeFile@data)
+max(shapeFile@data$distance)
+shapeFile@data[which.max(shapeFile@data$distance),]
+shapeFile@data[which(shapeFile@data$station_1==11),]
+shapeFile.f=fortify(shapeFile)
+head(shapeFile.f)
+?fortify
+?fortify
+shapeFile.b=broom(shapeFile)
+?broom
+install.packages("broom")
+head(Shapefile)
+head(shapeFile)
+shapeFile.b=broom(shapeFile)
+require(broom)
+shapeFile.b=broom(shapeFile)
+?fortify
+shapeFile.b=tidy(shapeFile)
+head(shapeFile)
+head(shapeFile.b)
+head(shapeFile.f)
+data.shapeFile=data.frame(data.shapeFile,id=as.numeric(as.character(data.shapeFile$toid_seq))-1)
+head(data.shaeFile)
+head(data.shapeFile)
+mergedSegments=merge(shapeFile.f,data.shapeFile,by.x="id",by.y="id")
+head(mergedSegments)
+firstStation= mergedSegments[mergedSegments$order==1,]
+head(mergedSegments)
+firstStation=data.frame(id=firstStation$station_1,name=firstStation$station_1_,long=firstStation$long,lat=firstStation$lat)
+head(firstStation)
+head(data.shapeFile)
+head(firstStation)
+head(shapeFile)
+head(firstStation)
+secondStation=mergedSegments[mergedSegments$order==2,]#
+secondStation =data.frame(id= secondStation $station_2,name= secondStation $station_2_,long= secondStation $long,lat= secondStation $lat)
+head(secondStation)
+stations=rbind(firstStation, secondStation)#
+stations=stations[!duplicated(stations$id),]
+stations=rbind(firstStation, secondStation)
+head(stations)
+stations=rbind(firstStation, secondStation)#
+stations=stations[!duplicated(stations$id),]
+head(stations)
+?merge
+dat=read.csv(file_name,header=TRUE)#,row.names=1,check.names=FALSE) #
+data=data.frame(dat,weight=dat$distance)
+dat
+head(dat)
+dat[which(dat$distance>5000)]
+dat[which(dat$distance>5000),]
+g_london=graph.data.frame(data,directed=FALSE)
+g_london
+E(g_london)
