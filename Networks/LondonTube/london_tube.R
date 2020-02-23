@@ -16,6 +16,7 @@ require(rgdal)
 require(ggplot2)
 require(sp)
 require(broom)
+library(dplyr)
 
 #if you open R or RStudio from the applications set your working directory to where you have your data
 #setwd("/Users/myUserName/directory/dataFolder")
@@ -216,3 +217,35 @@ plot(g_london,vertex.color=palette,vertex.size=normalised_clos_london*radius_ver
 g1=delete.vertices(g_london, c("Baker Street","Embankment"))
 V(g_london)
 V(g1)
+
+
+# Question 1 - Exam
+
+# LOGIC: 
+  # calculate measure
+  # save in dataframe
+  # sort nodes
+  # remove highest one
+
+
+# dataframe to store values in 
+df_results <- data.frame(matrix(nrow = 10))
+# clone the graph so as not to ruin the original one
+g_london_bet <- g_london
+
+for (i in 1:10){
+  # get betweeness
+  bet_london=betweenness(g_london_bet, v=V(g_london_bet), directed = F, normalized = FALSE)
+  #save average value to dataframe
+  df_results[i,1] <- mean(bet_london)
+  # sort tube stations by centrality measure value - descending order
+  # convert to dataframe so as to extract names in next step
+  sorted_between = sort(bet_london, decreasing = TRUE) %>%
+    as.data.frame()
+  # remove highest scoring vertex
+  # row.names to get the tube station name
+  g_london_bet = delete.vertices(g_london_bet, c(row.names(sorted_between)[1]))
+  }
+  
+
+
