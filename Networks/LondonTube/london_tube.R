@@ -233,6 +233,7 @@ df_results <- data.frame(matrix(nrow = 10))
 # clone the graph so as not to ruin the original one
 g_london_bet <- g_london
 
+# iterative deleting (delete and recalculate at each step)
 for (i in 1:10){
   # get betweeness
   bet_london=betweenness(g_london_bet, v=V(g_london_bet), directed = F, normalized = FALSE)
