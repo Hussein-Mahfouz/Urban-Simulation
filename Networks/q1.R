@@ -1,6 +1,8 @@
 # run the LondonTube script to have the network ready
 source('LondonTube/london_tube.R')
 
+library(bc3net) # to extract giant connected component
+
 # LOGIC: 
 # calculate measure
 # save in dataframe
@@ -8,18 +10,23 @@ source('LondonTube/london_tube.R')
 # remove highest one
 
 # dataframe to store values in (initially created with 1 column)
-df_results <- data.frame("Nodes Removed" = 0:10)
+inv_shortest_path <- data.frame("Nodes Removed" = 0:100)
+gcc <- data.frame("Nodes Removed" = 0:100)
 # clone the graph so as not to ruin the original one
 g_london_bet <- g_london
 
 # BETWEENESS CENTRALITY 
 
 # iterative deleting (delete and recalculate at each step)
-for (i in 1:11){
+for (i in 1:101){
   # get betweeness
   bet_london=betweenness(g_london_bet, v=V(g_london_bet), directed = F, normalized = FALSE)
-  #save average value to dataframe
-  df_results[i,2] <- mean(bet_london)
+  #get inverse shortest path and save average value to dataframe
+  inv_shortest_path[i,2] <- mean(is.finite(1/distances(g_london_bet)))
+  #inv_shortest_path[i,2] <- mean(is.finite(distances(g_london_bet)))
+  #inv_shortest_path[i,2] <- 1/(mean_distance(g_london_bet))
+  # get gcc ratio score
+  gcc[i,2] = (gorder(getgcc(g_london_bet)))/(gorder(g_london_bet))
   # sort tube stations by centrality measure value - descending order
   # convert to dataframe so as to extract names in next step
   sorted_between = sort(bet_london, decreasing = TRUE) %>%
@@ -40,15 +47,15 @@ bet_london=betweenness(g_london_bet, v=V(g_london_bet), directed = F, normalized
 sorted_between = sort(bet_london, decreasing = TRUE) %>%
   as.data.frame()
 
-for (i in 1:11){
+for (i in 1:101){
   #save average value to third column of dataframe
-  df_results[i,3] <- mean(bet_london)
+  inv_shortest_path[i,3] <- mean(is.finite(1/distances(g_london_bet)))
+  # gcc score
+  gcc[i,3] = (gorder(getgcc(g_london_bet)))/(gorder(g_london_bet))
   # remove highest scoring vertex
   # row.names to get the tube station name
   # use i instead of 1: we are not resorting so 1st tube station has been deleted and will raise an error in loop
   g_london_bet = delete.vertices(g_london_bet, c(row.names(sorted_between)[i]))
-  # calculate betweeness
-  bet_london=betweenness(g_london_bet, v=V(g_london_bet), directed = F, normalized = FALSE)
 }
 
 # CLOSENESS CENTRALITY
@@ -60,13 +67,15 @@ for (i in 1:11){
 # clone the graph so as not to ruin the original one
 g_london_close <- g_london
 # iterative deleting (delete and recalculate at each step)
-for (i in 1:11){
+for (i in 1:101){
   # get closeness
   close_london=closeness(g_london_close)  
   # normalize
   normalised_close_london=(close_london-min(close_london))/(max(close_london)-min(close_london))
   #save average value to dataframe
-  df_results[i,4] <- mean(normalised_close_london)
+  inv_shortest_path[i,4] <- mean(is.finite(1/distances(g_london_close)))
+  # gcc score
+  gcc[i,4] = (gorder(getgcc(g_london_close)))/(gorder(g_london_close))
   # sort tube stations by centrality measure value - descending order
   # convert to dataframe so as to extract names in next step
   sorted_close = sort(normalised_close_london, decreasing = TRUE) %>%
@@ -89,17 +98,15 @@ normalised_close_london=(close_london-min(close_london))/(max(close_london)-min(
 sorted_close = sort(normalised_close_london, decreasing = TRUE) %>%
   as.data.frame()
 
-for (i in 1:11){
+for (i in 1:101){
   #save average value to third column of dataframe
-  df_results[i,5] <- mean(normalised_close_london)
+  inv_shortest_path[i,5] <- mean(is.finite(1/distances(g_london_close)))
+  # gcc score
+  gcc[i,5] = (gorder(getgcc(g_london_close)))/(gorder(g_london_close))
   # remove highest scoring vertex
   # row.names to get the tube station name
   # use i instead of 1: we are not resorting so 1st tube station has been deleted and will raise an error in loop
   g_london_close = delete.vertices(g_london_close, c(row.names(sorted_close)[i]))
-  # calculate betweeness
-  close_london=closeness(g_london_close) 
-  # normalize
-  normalised_close_london=(close_london-min(close_london))/(max(close_london)-min(close_london))
 }
 
 
@@ -110,11 +117,13 @@ for (i in 1:11){
 # clone the graph so as not to ruin the original one
 g_london_deg <- g_london
 # iterative deleting (delete and recalculate at each step)
-for (i in 1:11){
+for (i in 1:100){
   # get closeness
   deg_london=degree(g_london_deg)  
   #save average value to dataframe
-  df_results[i,6] <- mean(deg_london)
+  inv_shortest_path[i,6] <- mean(is.finite(1/distances(g_london_deg)))
+  # gcc score
+  gcc[i,6] = (gorder(getgcc(g_london_deg)))/(gorder(g_london_deg))
   # sort tube stations by centrality measure value - descending order
   # convert to dataframe so as to extract names in next step
   sorted_deg = sort(deg_london, decreasing = TRUE) %>%
@@ -134,29 +143,29 @@ for (i in 1:11){
 
 # 1) iteratively 
 
-# # clone the graph so as not to ruin the original one
-# g_london_eigen <- g_london
-# # iterative deleting (delete and recalculate at each step)
-# for (i in 1:11){
-#   # get closeness
-#   eigen_london=eigen_centrality(g_london_eigen)  
-#   #save average value to dataframe
-#   df_results[i,7] <- mean(eigen_london$vector)
-#   # sort tube stations by centrality measure value - descending order
-#   # convert to dataframe so as to extract names in next step
-#   sorted_eigen = sort(eigen_london$vector, decreasing = TRUE) %>%
-#     as.data.frame()
-#   # remove highest scoring vertex
-#   # row.names to get the tube station name
-#   g_london_eigen = delete.vertices(g_london_eigen, c(row.names(sorted_eigen)[1]))
-# }
+# clone the graph so as not to ruin the original one
+g_london_eigen <- g_london
+# iterative deleting (delete and recalculate at each step)
+for (i in 1:100){
+  # get closeness
+  eigen_london=eigen_centrality(g_london_eigen)  
+  #save average value to dataframe
+  inv_shortest_path[i,7] <- mean(is.finite(1/distances(g_london_eigen)))
+  # sort tube stations by centrality measure value - descending order
+  # convert to dataframe so as to extract names in next step
+  sorted_eigen = sort(eigen_london$vector, decreasing = TRUE) %>%
+    as.data.frame()
+  # remove highest scoring vertex
+  # row.names to get the tube station name
+  g_london_eigen = delete.vertices(g_london_eigen, c(row.names(sorted_eigen)[1]))
+}
 
 
 # rename dataframe columns
-names(df_results)[2] <- "Betweeness Iterative"
-names(df_results)[3] <- "Betweeness AAO"
-names(df_results)[4] <- "Closeness Iterative"
-names(df_results)[5] <- "Closeness AAO"
+names(inv_shortest_path)[2] <- "Betweeness Iterative"
+names(inv_shortest_path)[3] <- "Betweeness AAO"
+names(inv_shortest_path)[4] <- "Closeness Iterative"
+names(inv_shortest_path)[5] <- "Closeness AAO"
 
 
 
@@ -170,7 +179,7 @@ names(df_results)[5] <- "Closeness AAO"
 library(ggplot2)
 library(reshape2)
 
-df_plot <- melt(df_results,  id.vars = 'Nodes', variable.name = 'series')
+df_plot <- melt(inv_shortest_path,  id.vars = 'Nodes', variable.name = 'series')
 
 
 # plot on same grid, each series colored differently -- 
@@ -179,4 +188,8 @@ ggplot(df_plot, aes(Nodes,value)) +
   geom_line(aes(colour = series))
 
 
+# TO GET Largest Connected Component
 
+# getgcc() extracts the component
+# gorder() gets no of nodes/vertices
+# gorder(getgcc(graph)) ---> no of nodes in largest gcc
