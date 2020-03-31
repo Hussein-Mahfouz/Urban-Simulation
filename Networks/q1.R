@@ -1,6 +1,7 @@
 # run the LondonTube script to have the network ready
 source('LondonTube/london_tube.R')
 
+library(tidyverse)
 library(bc3net) # to extract giant connected component
 
 # LOGIC: 
@@ -10,29 +11,45 @@ library(bc3net) # to extract giant connected component
 # remove highest one
 
 # dataframe to store values in (initially created with 1 column)
-inv_shortest_path <- data.frame("Nodes Removed" = 0:100)
-gcc <- data.frame("Nodes Removed" = 0:100)
-# clone the graph so as not to ruin the original one
-g_london_bet <- g_london
+    #the length is equal to the number of vertices
+inv_shortest_path <- data.frame("Nodes Removed" = 0:gorder(g_london))
+gcc <- data.frame("Nodes Removed" = 0:gorder(g_london))
+
 
 # BETWEENESS CENTRALITY 
 
+# clone the graph so as not to ruin the original one
+g_london_bet <- g_london
+# get initial number of vertices 
+n_ver_init <- gorder(g_london)
+
 # iterative deleting (delete and recalculate at each step)
-for (i in 1:101){
+for (i in 1:gorder(g_london)){
   # get betweeness
   bet_london=betweenness(g_london_bet, v=V(g_london_bet), directed = F, normalized = FALSE)
-  #get inverse shortest path and save average value to dataframe
-  inv_shortest_path[i,2] <- mean(is.finite(1/distances(g_london_bet)))
-  #inv_shortest_path[i,2] <- mean(is.finite(distances(g_london_bet)))
-  #inv_shortest_path[i,2] <- 1/(mean_distance(g_london_bet))
-  # get gcc ratio score
-  gcc[i,2] = (gorder(getgcc(g_london_bet)))/(gorder(g_london_bet))
+  #get the fraction of nodes removed (this is the x - axis)
+  inv_shortest_path[i,2] <- (1 - ((gorder(g_london) - (i-1)) / gorder(g_london)))
+  gcc[i,2] <- (1 - ((gorder(g_london) - (i-1)) / gorder(g_london)))
+  # get inverse shortest path and save value to dataframe
+      # 1.get distance matrix
+  dist_mat <- distances(g_london_bet, algorithm = "dijkstra")
+      # 2. get inverse of each shortest path
+  dist_inv <- 1/dist_mat
+      # 3. turn INF at the diagonal to 0s (if we do is.finite instead then diagonals aren't counted in denominator)
+  dist_inv[is.infinite(dist_inv)] <- 0
+      # 4. get number of vertex pairs (demonitaor = N(N-1))
+  ver_pair <- ((n_ver_init - i) * (n_ver_init - (i+1)))
+      # 5. store in results df mean(dist_inv) is the mean inverse shortest path
+  inv_shortest_path[i,3] <- sum(dist_inv) / ver_pair
+      # 6. normalize the results (divide by result obtained from first iteration)
+  inv_shortest_path[i,4] <- inv_shortest_path[i,3] / inv_shortest_path[1,3]
+  # get gcc ratio score (this score is normalized)
+  gcc[i,3] = (gorder(getgcc(g_london_bet)))/(gorder(g_london_bet))
   # sort tube stations by centrality measure value - descending order
   # convert to dataframe so as to extract names in next step
   sorted_between = sort(bet_london, decreasing = TRUE) %>%
     as.data.frame()
-  # remove highest scoring vertex
-  # row.names to get the tube station name
+  # remove highest scoring vertex (row.names to get the tube station name)
   g_london_bet = delete.vertices(g_london_bet, c(row.names(sorted_between)[1]))
 }
 
@@ -48,10 +65,21 @@ sorted_between = sort(bet_london, decreasing = TRUE) %>%
   as.data.frame()
 
 for (i in 1:101){
-  #save average value to third column of dataframe
-  inv_shortest_path[i,3] <- mean(is.finite(1/distances(g_london_bet)))
+  # get inverse shortest path and save value to dataframe
+  # 1.get distance matrix
+  dist_mat <- distances(g_london_bet, algorithm = "dijkstra")
+  # 2. get inverse of each shortest path
+  dist_inv <- 1/dist_mat
+  # 3. turn INF at the diagonal to 0s (if we do is.finite instead then diagonals aren't counted in denominator)
+  dist_inv[is.infinite(dist_inv)] <- 0
+  # 4. get number of vertex pairs (demonitaor = N(N-1))
+  ver_pair <- ((n_ver_init - i) * (n_ver_init - (i+1)))
+  # 5. store in results df mean(dist_inv) is the mean inverse shortest path
+  inv_shortest_path[i,5] <- sum(dist_inv) / ver_pair
+  # 6. normalize the results (divide by result obtained from first iteration)
+  inv_shortest_path[i,6] <- inv_shortest_path[i,5] / inv_shortest_path[1,5]
   # gcc score
-  gcc[i,3] = (gorder(getgcc(g_london_bet)))/(gorder(g_london_bet))
+  gcc[i,4] = (gorder(getgcc(g_london_bet)))/(gorder(g_london_bet))
   # remove highest scoring vertex
   # row.names to get the tube station name
   # use i instead of 1: we are not resorting so 1st tube station has been deleted and will raise an error in loop
@@ -162,10 +190,16 @@ for (i in 1:100){
 
 
 # rename dataframe columns
-names(inv_shortest_path)[2] <- "Betweeness Iterative"
-names(inv_shortest_path)[3] <- "Betweeness AAO"
-names(inv_shortest_path)[4] <- "Closeness Iterative"
-names(inv_shortest_path)[5] <- "Closeness AAO"
+  # inv_shortest_path df
+names(inv_shortest_path)[2] <- "% of Nodes Removed"
+names(inv_shortest_path)[3] <- "Betweeness Iterative"
+names(inv_shortest_path)[4] <- "Normalized Betweeness Iterative"
+names(inv_shortest_path)[5] <- "Betweeness AAO"
+names(inv_shortest_path)[6] <- "Normalized Betweeness AAO"
+  # gcc df
+names(gcc)[2] <- "% of Nodes Removed"
+names(gcc)[3] <- "Betweeness Iterative"
+names(gcc)[4] <- "Betweeness AAO"
 
 
 
