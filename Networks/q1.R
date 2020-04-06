@@ -28,8 +28,8 @@ for (i in 1:gorder(g_london)){
   # get betweeness
   bet_london=betweenness(g_london_bet, v=V(g_london_bet), directed = F, normalized = FALSE)
   #get the fraction of nodes removed (this is the x - axis)
-  inv_shortest_path[i,2] <- (1 - ((gorder(g_london) - (i-1)) / gorder(g_london)))
-  gcc[i,2] <- (1 - ((gorder(g_london) - (i-1)) / gorder(g_london)))
+  inv_shortest_path[i,2] <- (1 - ((gorder(g_london) - (i-1)) / gorder(g_london))) * 100
+  gcc[i,2] <- (1 - ((gorder(g_london) - (i-1)) / gorder(g_london))) * 100
   # get inverse shortest path and save value to dataframe
       # 1.get distance matrix
   dist_mat <- distances(g_london_bet, algorithm = "dijkstra")
@@ -298,22 +298,22 @@ for (i in 1:gorder(g_london)){
 
   # inv_shortest_path df
 names(inv_shortest_path)[2] <- "Perc_of_Nodes_Removed"
-names(inv_shortest_path)[3] <- "Betweeness_Iterative"
-names(inv_shortest_path)[4] <- "Normalized_Betweeness_Iterative"
-names(inv_shortest_path)[5] <- "Betweeness_AAO"
-names(inv_shortest_path)[6] <- "Normalized_Betweeness_AAO"
-names(inv_shortest_path)[7] <- "Closeness_Iterative"
-names(inv_shortest_path)[8] <- "Normalized_Closeness_Iterative"
-names(inv_shortest_path)[9] <- "Closeness_AAO"
-names(inv_shortest_path)[10] <- "Normalized_Closeness_AAO"
-names(inv_shortest_path)[11] <- "Degree_Iterative"
-names(inv_shortest_path)[12] <- "Normalized_Degree_Iterative"
-names(inv_shortest_path)[13] <- "Degree_AAO"
-names(inv_shortest_path)[14] <- "Normalized_Degree_AAO"
-names(inv_shortest_path)[15] <- "Eigenvector_Iterative"
-names(inv_shortest_path)[16] <- "Normalized_Eigenvector_Iterative"
-names(inv_shortest_path)[17] <- "Eigenvector_AAO"
-names(inv_shortest_path)[18] <- "Normalized_Eigenvector_AAO"
+names(inv_shortest_path)[3] <- "Betweeness_Iterative_Raw"
+names(inv_shortest_path)[4] <- "Betweeness_Iterative"
+names(inv_shortest_path)[5] <- "Betweeness_AAO_Raw"
+names(inv_shortest_path)[6] <- "Betweeness_AAO"
+names(inv_shortest_path)[7] <- "Closeness_Iterative_Raw"
+names(inv_shortest_path)[8] <- "Closeness_Iterative"
+names(inv_shortest_path)[9] <- "Closeness_AAO_Raw"
+names(inv_shortest_path)[10] <- "Closeness_AAO"
+names(inv_shortest_path)[11] <- "Degree_Iterative_Raw"
+names(inv_shortest_path)[12] <- "Degree_Iterative"
+names(inv_shortest_path)[13] <- "Degree_AAO_Raw"
+names(inv_shortest_path)[14] <- "Degree_AAO"
+names(inv_shortest_path)[15] <- "Eigenvector_Iterative_Raw"
+names(inv_shortest_path)[16] <- "Eigenvector_Iterative"
+names(inv_shortest_path)[17] <- "Eigenvector_AAO_Raw"
+names(inv_shortest_path)[18] <- "Eigenvector_AAO"
 
   # gcc df
 names(gcc)[2] <- "Perc_of_Nodes_Removed"

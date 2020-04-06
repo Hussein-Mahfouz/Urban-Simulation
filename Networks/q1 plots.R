@@ -6,9 +6,9 @@ library(ggthemes)
 # convert to lon format (for plotting)
 inv_shortest_path_lon <- 
             gather(data=inv_shortest_path, key= Method, value=Result, 
-                   Normalized_Betweeness_Iterative, Normalized_Betweeness_AAO, # columns to be gathered
-                   Normalized_Degree_Iterative, Normalized_Degree_AAO, 
-                   Normalized_Eigenvector_Iterative, Normalized_Eigenvector_AAO,
+                   Betweeness_Iterative, Betweeness_AAO, # columns to be gathered
+                   Degree_Iterative, Degree_AAO, 
+                   Eigenvector_Iterative, Eigenvector_AAO,
                    Random_Removal,
                    factor_key = TRUE)
 
@@ -25,12 +25,14 @@ p <- ggplot(data=inv_shortest_path_lon,
                  geom_line(aes(linetype=Method, color=Method)) +      #linetype argument added to define types for different methods
                  scale_linetype_manual(values=c("solid", "dotted", "solid", "dotted", "solid", "dotted", "dashed")) +
                  scale_color_manual(values=c('#E69F00','#E69F00', "#009E73", "#009E73", "#800020", "#800020", "#808080")) +
-                 labs(y="Mean Inverse Shortest Path Length", x = "Nodes Removed (%)") +
+                 labs(y= expression(l^-1), x = "Nodes Removed (%)") +
                  ylim(0, 1) +   # because the eigenvector shoots up to infinity
                  # theme_fivethirtyeight() 
-                 theme(legend.position="bottom", legend.text=element_text(size=rel(0.5))) 
-                 #theme_minimal(legend.position="bottom")  # theme_fivethirtyeight()
+                 theme(legend.position="bottom", 
+                       legend.text=element_text(size=rel(0.5)),
+                       legend.title = element_blank())
 
+                 #theme_minimal(legend.position="bottom")  # theme_fivethirtyeight()
 
 ggsave(path = "Plots", file="Inv_shortest_path.png", p)
 
@@ -39,8 +41,10 @@ p <- ggplot(data=gcc_lon,
                  geom_line(aes(linetype=Method, color=Method)) +      #linetype argument added to define types for different methods
                  scale_linetype_manual(values=c("solid", "dotted", "solid", "dotted", "solid", "dotted", "dashed")) +
                  scale_color_manual(values=c('#E69F00','#E69F00', "#009E73", "#009E73", "#800020", "#800020", "#808080")) +
-                 labs(y="Size of GCC as Percentage of No. of Nodes", x = "Nodes Removed (%)") +
-                 theme_minimal()  # theme_fivethirtyeight()
+                 labs(y="S", x = "Nodes Removed (%)") +
+                 theme(legend.position="bottom", 
+                       legend.text=element_text(size=rel(0.5)),
+                       legend.title = element_blank())
 
 ggsave(path = "Plots", file="gcc.png", p)
 

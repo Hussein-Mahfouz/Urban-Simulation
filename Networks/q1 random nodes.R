@@ -11,8 +11,8 @@ g_london_rand <- g_london
 # Just add the first column values
 for (i in 1:gorder(g_london)){
   #get the fraction of nodes removed (this is the x - axis)
-  df_random_inv[i,2] <- (1 - ((gorder(g_london) - (i-1)) / gorder(g_london)))
-  df_random_gcc[i,2] <- (1 - ((gorder(g_london) - (i-1)) / gorder(g_london)))
+  df_random_inv[i,2] <- (1 - ((gorder(g_london) - (i-1)) / gorder(g_london))) * 100 
+  df_random_gcc[i,2] <- (1 - ((gorder(g_london) - (i-1)) / gorder(g_london))) * 100
 }
 
 # create a dataframe of station names that can be accessed for deleting nodes
