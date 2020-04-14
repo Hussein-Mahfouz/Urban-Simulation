@@ -230,12 +230,59 @@ cdatamat5 <- dcast(cdata, Orig ~ Dest, sum, value.var = "prodsimest4_scenario", 
 cdatamat5
 
 
+# INCREASE DISTANCE IMPEDENCE 
 
+# Calibrated Beta is -1.82
 
+# try doubling Beta 
 
+beta2 <- -3.64
+# get new distance numbers
+dist_beta2 <- cdata$dist^beta2
 
+# use wj2_alpha as we did not change the alpha parameter
 
+#calculate the first stage of the Ai values
+cdata$Ai2 <- wj2_alpha*dist_beta2
+#now do the sum over all js bit
+A_i2 <- cdata %>% group_by(OrigCodeNew) %>% summarise(A_i2 = sum(Ai2))
+#now divide in to 1
+A_i2[,2] <- 1/A_i2[,2]
+#and write the A_i values back into the data frame
+cdata$A_i2 <- A_i2$A_i2[match(cdata$OrigCodeNew,A_i2$OrigCodeNew)]
 
+#estimate flow with beta = -3
+#To check everything works, recreate the original estimates
+cdata$prodsimest5_scenario <- cdata$A_i2*cdata$O_i*wj2_alpha*dist_beta2
 
+cdata$prodsimest5_scenario <- round(cdata$prodsimest5_scenario,0)
+#now we can create pivot table to turn paired list into matrix (and compute the margins as well)
+cdatamat6 <- dcast(cdata, Orig ~ Dest, sum, value.var = "prodsimest5_scenario", margins=c("Orig", "Dest"))
+cdatamat6
 
+# # try tripling Beta 
+
+beta3 <- -5.46
+# get new distance numbers
+dist_beta3 <- cdata$dist^beta3
+
+# use wj2_alpha as we did not change the alpha parameter
+
+#calculate the first stage of the Ai values
+cdata$Ai3 <- wj2_alpha*dist_beta3
+#now do the sum over all js bit
+A_i3 <- cdata %>% group_by(OrigCodeNew) %>% summarise(A_i3 = sum(Ai3))
+#now divide in to 1
+A_i3[,2] <- 1/A_i3[,2]
+#and write the A_i values back into the data frame
+cdata$A_i3 <- A_i3$A_i3[match(cdata$OrigCodeNew,A_i3$OrigCodeNew)]
+
+#estimate flow with beta = -3
+#To check everything works, recreate the original estimates
+cdata$prodsimest6_scenario <- cdata$A_i3*cdata$O_i*wj2_alpha*dist_beta3
+
+cdata$prodsimest6_scenario <- round(cdata$prodsimest6_scenario,0)
+#now we can create pivot table to turn paired list into matrix (and compute the margins as well)
+cdatamat7 <- dcast(cdata, Orig ~ Dest, sum, value.var = "prodsimest6_scenario", margins=c("Orig", "Dest"))
+cdatamat7
 
