@@ -7,7 +7,7 @@ city_salary <- cdata %>% group_by(Dest) %>%
                                    sal_reduce   = sum(prodsimest4_scenario))
 
 #change column names
-names(city_salary)[2] <- "Intitial Flows"
+names(city_salary)[2] <- "Initial Flows"
 names(city_salary)[3] <- "New Flows"
 
 # convert from wide to long format. This way we can add a legend
@@ -50,7 +50,8 @@ avg_dist <- cdata %>% group_by(Dest) %>%
                             tot_dist_travelled_3      = sum(dist * prodsimest5_scenario) / 1000,
                             tot_dist_travelled_5      = sum(dist * prodsimest6_scenario) / 1000,
                             perc_dist_decrease_3      = (abs(tot_dist_travelled_3 - tot_dist_travelled)/tot_dist_travelled) *100,
-                            perc_dist_decrease_5      = (abs(tot_dist_travelled_5 - tot_dist_travelled)/tot_dist_travelled) *100)
+                            perc_dist_decrease_5      = (abs(tot_dist_travelled_5 - tot_dist_travelled)/tot_dist_travelled) *100,
+                            salary                    = mean(wj2_destsal))
 
 #subset df for plotting
 avg_dist_plot <- avg_dist %>% select(Dest, avg_dist_travelled, avg_dist_travelled_3, avg_dist_travelled_5)
@@ -113,3 +114,72 @@ p <- p + theme(axis.title.x = element_blank(),
 p
 
 ggsave(path = "Plots", file="Perc_Avg_Distance_Commuting.png", p, width = 10, height = 6)
+
+
+# to get flows reaching each Borough after altering Beta
+
+beta_increase <- cdata %>% group_by(Dest) %>%
+                          summarise(intial_flows = sum(prodsimFitted),
+                                    beta_inc_1   = sum(prodsimest5_scenario),
+                                    beta_inc_2   = sum(prodsimest6_scenario))
+
+
+#change column names
+names(beta_increase)[2] <- "-1.82"
+names(beta_increase)[3] <- "-3.64"
+names(beta_increase)[4] <- "-5.46"
+
+# convert from wide to long format. This way we can add a legend
+beta_increase_long <- melt(beta_increase, id.vars = c("Dest"))
+
+p <- ggplot(data=beta_increase_long, aes(x=Dest, y=value, group=factor(variable), fill=factor(variable))) +
+            geom_bar(stat="identity", position=position_dodge(0.7), colour="black") +
+            ggtitle("Effect of Distance Parameter on Total Flow into Borough") +
+            labs(x = "", y = "Total Flow into Borough", fill = "Beta") +
+            scale_y_continuous(labels = scales::comma_format()) +                         # add comma to y labels
+            scale_fill_brewer(palette = "Blues") +                                        # for nice color schemes
+            theme(axis.text.x = element_text(angle=50, hjust=1), plot.title = element_text(hjust = 0.5))        # edit angle of text, hjust argument so that text stays below plot AND center plot title
+
+p
+ggsave(path = "Plots", file="Flow_Change_Cost.png", p, width = 10, height = 6)
+
+
+
+
+# change in flow compared to avg salary 
+
+flow_salary <- cdata %>% group_by(Dest) %>%
+                summarise(intial_flows  = sum(prodsimFitted),
+                          beta_inc_1    = sum(prodsimest5_scenario),
+                          beta_inc_2    = sum(prodsimest6_scenario),
+                          flow_change_1 = ((sum(prodsimest5_scenario) - sum(prodsimFitted)) / sum(prodsimFitted) *100),
+                          flow_change_2 = ((sum(prodsimest6_scenario) - sum(prodsimFitted)) / sum(prodsimFitted) *100),
+                          salary        = mean(wj2_destsal))
+
+# select columns 
+flow_salary_plot <- flow_salary %>% select(Dest, flow_change_1, flow_change_2, salary)
+# convert from wide to long format. This way we can add a legend
+flow_salary_long <- melt(flow_salary_plot, id.vars = c("Dest", "salary"))
+
+ggplot(flow_salary_long, aes(x=salary, y=value, color=variable, shape=variable)) + geom_point()
+
+
+#% change in distance travelled to Borough vs Salary
+perc_dist_salary <- avg_dist %>% select(Dest, perc_avg_dist_decrease_3, perc_avg_dist_decrease_5, salary)
+
+#change column names
+names(perc_dist_salary)[2] <- "Beta = -3.64"
+names(perc_dist_salary)[3] <- "Beta = -5.46"
+
+perc_dist_salary_long <- melt(perc_dist_salary, id.vars = c("Dest", "salary"))
+
+p <- ggplot(perc_dist_salary_long, aes(x=salary, y=value, color=variable, shape=variable)) + 
+            geom_point() + 
+            ggtitle("Relationship Between Destination Salaries and Increasing Transport Cost") +
+            labs(x = "Salary", y = "T% Decrease in Avg Distance Travelled to Borough", fill = "Beta") +
+            scale_x_continuous(labels = scales::comma_format()) +
+            geom_smooth(method=lm)
+            
+p <- p + theme(legend.title=element_blank())
+p
+ggsave(path = "Plots", file="Salary_vs_Transpot_Cost.png", p, width = 10, height = 6)

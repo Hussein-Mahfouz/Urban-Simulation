@@ -37,7 +37,7 @@ for (i in 1:gorder(g_london)){
   dist_inv <- 1/dist_mat
       # 3. turn INF at the diagonal to 0s (if we do is.finite instead then diagonals aren't counted in denominator)
   dist_inv[is.infinite(dist_inv)] <- 0
-      # 4. get number of vertex pairs (demonitaor = N(N-1))
+      # 4. get number of vertex pairs (denominator = N(N-1))
   ver_pair <- ((n_ver_init - i) * (n_ver_init - (i+1)))
       # 5. store in results df mean(dist_inv) is the mean inverse shortest path
   inv_shortest_path[i,3] <- sum(dist_inv) / ver_pair
