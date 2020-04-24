@@ -53,6 +53,7 @@ forHeatMap = forHeatMap %>%
 # pivot for plotting (to get count sheep and count wolves together)
 
 forHeatMapFacet <- forHeatMap %>% pivot_longer(cols = c(`sheep`, `wolves`), names_to = "variable", values_to = "count")
+forHeatMapFacet$ratio <- round(forHeatMapFacet$initial_wolves / forHeatMapFacet$initial_sheep, 2) %>% as.character()
 # convert group column to string for plotting
 
 
