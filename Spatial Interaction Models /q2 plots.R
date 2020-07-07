@@ -176,7 +176,7 @@ perc_dist_salary_long <- melt(perc_dist_salary, id.vars = c("Dest", "salary"))
 p <- ggplot(perc_dist_salary_long, aes(x=salary, y=value, color=variable, shape=variable)) + 
             geom_point() + 
             ggtitle("Relationship Between Destination Salaries and Increasing Transport Cost") +
-            labs(x = "Salary", y = "T% Decrease in Avg Distance Travelled to Borough", fill = "Beta") +
+            labs(x = "Salary", y = "% Decrease in Avg Distance Travelled to Borough", fill = "Beta") +
             scale_x_continuous(labels = scales::comma_format()) +
             geom_smooth(method=lm)
             
